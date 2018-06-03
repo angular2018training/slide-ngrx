@@ -1,0 +1,86 @@
+﻿1. Reducer :
+
+_ Khi ta dispatch action, ta cần khai báo reducer để store biết là action đó cần làm gì.
+_ Là 1 function nhận vào state hiện tại của store và action ( bao gồm type & payload )
+	+ Type : để phân biệt action nào
+	+ Payload : dữ liệu đi kèm.
+
+2. Viết reducer chung trong index.ts ( reducer / index.ts )
+
+_ Tạo kiểu AuthState :
+	type AuthState = {
+		loggedIn: boolean,
+		user: User
+	}
+
+_ Giá trị ban đầu cho AuthState :
+	const initialAuthState : AuthState {
+		loggedIn: false,
+		user: undefined
+	}
+
+_ Bổ sung vào AppState {
+	auth : AuthState
+}
+
+_ Tạo authReducer :
+
+	function authReducer(state: AuthState = initialAuthState, action) : AuthState{
+		switch(action.type){
+			case AuthActionTypes.LoginAction:
+				return {
+					loggedIn: true,
+					user: action.payload.user
+				}
+			default: return state;
+		}
+	}
+
+_ Bổ sung vào reducers ( combine Reducer )
+
+	reducers = {
+		auth : authReducer
+	}
+
+3. Tạo reducer ra thư mục riêng :  bằng tool angular cli : ng g reducer Auth --flat=false --module auth/auth.module.ts
+
+_ Tại module feature : StoreModule.forFeature('auth', fromAuth.reducer); // import * as fromAuth from './auth.reducer';
+_ Tại reducer vừa tạo : 
+	import Action
+
+	type AuthState = {
+		loggedIn: boolean,
+		user: User
+	}
+	
+hoặc	export interface AuthState {
+
+	}
+
+	
+	export const initialState : AuthState = {
+
+	}
+
+	export function authReducer(state = initial, action : AuthActions) : AuthState {
+		switch
+		case
+		default
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,33 @@
+﻿1. Tham khảo : github.com/ngrx/platform
+_ Sử dụng schematics để gen store.
+
+npm install @ngrx/schematics --save-dev
+npm install github:ngrx/schematics-builds --save-dev
+npm install @ngrx/{store,effects,entity,store-devtools} --save
+ng config cli.defaultCollection @ngrx/schematic
+
+_ Setup init State : 
+
+	ng generate store AppState --root --module app.module.ts --collection @ngrx/schematics
+hoặc 	ng generate store AppState --root --module app.module.ts
+
+_ Tại reducer/index.ts : đổi tên root state thành tên bất kỳ. Thường là AppState.
+
+{
+	auth: ...,
+	courses: ...,
+	lessons: ...
+}
+
+2. Meta reducer : 
+
+_ là 1 cái tên cho việc cải thiện function ( higher order reducer ).
+_ Reducer là 1 function
+_ Còn đây là 1 function có thể : nhận vào 1 function như là 1 tham số hoặc có thể return về 1 function.
+
+3. Store : là 1 service. Ta có thể tiêm vào sử dụng.
+_ Là 1 observable. Ta có thể subscribe. 
+_ Không nên thay đổi trực tiếp dữ liệu mà tiến hành dispatch 1 action để reducer phân tích và thực hiện. store.dispatch().
+_ Là 1 singleton service tập trung.
+_ Nó chứa tất cả state của app. 
+_ Sử dụng : private store : Store<AppState>
