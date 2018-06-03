@@ -3,7 +3,8 @@
 _ Khi ta dispatch action, ta cần khai báo reducer để store biết là action đó cần làm gì.
 _ Là 1 function nhận vào state hiện tại của store và action ( bao gồm type & payload )
 	+ Type : để phân biệt action nào
-	+ Payload : dữ liệu đi kèm.
+	+ Payload : dữ liệu đi kèm
+		Là constructor có input là public payload : { biến : kiểu }
 
 2. Viết reducer chung trong index.ts ( reducer / index.ts )
 
