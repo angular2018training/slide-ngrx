@@ -1,0 +1,56 @@
+﻿1. Resolver trong router :
+
+_ Luồng routing các bạn thường làm :
+
+	1. Người dùng click vào liên kết
+	2. Angular thực thi code và trả về giá trị hoặc observable
+	3. Bạn có thể lấy, xử lý ( gọi chung là collect ) giá trị hoặc observable trong constructor hoặc ngOinit
+	4. Sử dụng dữ liệu thu thập được để làm 1 việc gì đó như hiển thị, tính toán
+	5. Hiển thị lên component...
+
+Bước 2, 3, 4 được gọi là resolver.
+
+_ Các bước :
+	B1 : tạo service
+	B2 : import resolver từ @angular/router
+	B3 : implment interface trong class của mình
+	B4 : override resolver() method
+	B5 : resolver method phải có tham số là routesnapshot và statesnapshot.
+	B6 : resolve method phải trả về giá trị hoặc observable.
+	B7 : khai báo resolve trong module :
+	resolve: {
+            course: CourseResolver
+        }	
+	=> course là key để lấy
+	B8 : sử dụng gọi activatedRoute thông qua key khai báo trong module
+	this.activated.snapshot.data["key"]
+
+2. Action cho Couse Module :
+
+_ courseId request lên server và course sau khi load.
+
+CourseRequested = '[View Course Page] Course Requested' => payload là courseId : number
+CourseLoaded = '[Courses API] Course Loaded' => payload là course : Course
+
+3. Ngrx Entity : 
+
+_ Giúp quản lý các store dạng collection ( danh sách).
+_ Cung cấp CRUD : addOne, updateOne, deleteOne, addAll, ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3. Ngrx Entity : 

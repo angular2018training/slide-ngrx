@@ -1,0 +1,15 @@
+﻿1.1 Giữ cho những state trong store luôn immutable :
+
+_ Cải thiện hiệu năng
+_ Dễ debug : thay đổi giá trị, dữ liệu tùy tiện khó debug.
+_ Dễ dàng tìm kiếm sự thay đổi, dễ xử lý, năng suất làm việc ok hơn.
+_ Cần có default trong reducer switch case.
+_ Để đảm bảo ta dùng NgRx Store Freeze : Khi mutation xảy ra nó sẽ văng exception => chỉ cần dùng cho development.
+
+Tham khảo : github.com/brandonroberts/ngrx-store-freeze
+
+npm i --save-dev ngrx-store-freeze
+
+1.2 Sử dụng tại reducer/index.ts : 
+
+!environment.production ? [storeFreeze] : [];

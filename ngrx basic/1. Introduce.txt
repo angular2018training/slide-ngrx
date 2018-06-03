@@ -1,0 +1,23 @@
+﻿1. Ngrx Ecosystem
+_ Ngrx Store Architecture
+_ Ngrx store module
+_ Ngrx effects
+_ Ngrx entity, 
+_ Ngrx Router store
+_ Ngrx schematics.
+
+2. Tại sao cần Ngrx : 
+_ Vấn đề UX : loading, ....
+_ VD : có 2 tab : Begin & Advanced ( bao gồm danh sách khóa học begin & advance )
+	+ Khi edit khóa học begin <=> advanced : cần cập nhật lại mảng ngay lập tức. 
+	+ Có thể sử dụng output nhưng khó quản lý.
+
+3. Phân biệt 1 số thuật ngữ
+_ Event & Command :
+
+VD : Bài toán tăng giá trị ( Increment Couter ) là command.
+ 
+	_ Event.
+	_ Command : component sẽ nói cho store biết, làm thế nào để cập nhật data.
+
+4. Cài đặt : github.com/ngrx/platform

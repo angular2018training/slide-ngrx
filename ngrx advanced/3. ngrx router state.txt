@@ -1,0 +1,19 @@
+﻿1. @ngrx/router-store
+
+_ Khai báo tại app module : stateKey là tên trong ngrx devtool
+
+StoreRouterConnectingModule.forRoot({ stateKey: 'router' })
+
+2. Custom Router State Serializer :
+
+_ Đưa các thông tin của router vào store : url, params, queryParams
+
+_ Tạo thư mục shared/utils.ts
+
+Copy toàn bộ trên trang github đem qua. Không copy reducers và Module.
+
+_ Khai báo providers tại app
+
+_ Khai báo router vào reducer của app ( reducer/index.ts ) :
+
+	router: routerReducer

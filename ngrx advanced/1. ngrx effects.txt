@@ -1,0 +1,65 @@
+﻿1. Ngrx Effects :
+
+_ Tách biệt phần sử dụng side effects
+_ Side effects : là 1 cách cho những state asynchonous. 
+
+VD : Khi ta gọi API login, thành công thì dispatch action lưu thông tin user vào store và navigate. 
+
+2. Tạo side effect : ng g effect name --module name/name.module.ts
+
+_ Bổ sung root effect tại app module : EffectsModule.forRoot([])
+_ Bổ sung EffectsModule.forFeature([Name_of_Effects]);
+
+3. AuthEffects
+
+@Injectable()
+export class AuthEffects{
+
+	@Effect({ dispatch: false })
+	login$ = this.actions$.pipe(
+		ofType<Login>(AuthActionTypes.LoginAction)
+		tap(action => localStorage.setItem('user', JSON.stringify(action.payload.user)))
+	);
+
+	@Effect({ dispatch: false })
+	logout$ = this.actions$.pipe(
+		ofType<Logout>(AuthActionTypes.LogoutAction),
+		tap(() => {
+			localStorage.removeItem('user');
+			this.router.navigateByUrl('/login');
+		})
+	);
+
+	constructor(private actions$: Actions){} // tiêm thêm router vào
+}
+
+4. Chức năng : lưu thông tin user khi refresh trang F5 => initial Side Effect - defer của rxjs
+
+@Effect()
+init$ = defer(() => {
+	const userData = localStorage.getItem('user');
+	if(userData){
+		return of(new Login(JSON.parse(userData))); // giống như inject store và dispatch login action.
+	}
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
