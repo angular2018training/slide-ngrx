@@ -25,18 +25,195 @@ _ Các bước :
 	B8 : sử dụng gọi activatedRoute thông qua key khai báo trong module
 	this.activated.snapshot.data["key"]
 
-2. Action cho Couse Module :
+2. Khai báo các action : course/course.actions.ts
 
-_ courseId request lên server và course sau khi load.
+VD : Course Action
 
-CourseRequested = '[View Course Page] Course Requested' => payload là courseId : number
-CourseLoaded = '[Courses API] Course Loaded' => payload là course : Course
+CourseActionTypes { 
 
-3. Ngrx Entity : 
+	CourseRequested = '[View Course Page] Course Requested', => class có payload : { courseId: number }
+	CourseLoaded = '[Courses API] Course Loaded' => class có payload : { course: Course }
 
+}
+
+3. Ngrx Entity : course.reducers.ts
+
+_ Là cách tốt nhất lưu trữ collection của thực thể trong memory store.
 _ Giúp quản lý các store dạng collection ( danh sách).
 _ Cung cấp CRUD : addOne, updateOne, deleteOne, addAll, ...
 
+VD : Course Reducer :
+
+Model : tham khảo
+
+export interface Course {
+    id:number;
+    description:string;
+    iconUrl: string;
+    courseListIcon: string;
+    longDescription: string;
+    category:string;
+    lessonsCount:number;
+    promo:boolean;
+}
+
+export interface CoursesState extends EntityState<Course>{} => courses: { ids: [], entities: {} }
+export const adapter: EntityAdapter<Course> = createEntityAdapter<Course>();
+
+export const initialState : CoursesState = adapter.getInitialState();
+
+export function coursesReducer(state = initialState, action: CourseActions): CoursesState {
+	switch(action.type){
+		case CourseActionTypes.CourseLoaded:
+			return adapter.addOne(action.payload.course, state);
+		default: {
+			return state;
+		}
+	}
+}
+
+Tại CourseModule : StoreModule.forFeature('courses', coursesReducer)
+
+=> Test : const state: CoursesState; 
+=> state.entities : trả về dạng dictionary
+=> ids, 
+
+************ Ngrx Entity Adapter **************
+
+=> Test : adapter.getSelector()
+=> addAll, addMany, addOne, removeAll
+
+_ Chức năng lấy course theo id trên router : Tạo selector để lấy course theo id => course.selectors.ts
+
+import { createFeatureSelector } from '@ngrx/store';
+
+export const selectCoursesState = createFeatureSelector<CoursesState>("courses"); // từ reducer
+
+export const selectCourseById = ( courseId: number ) => createSelector(selectCoursesState,coursesState => courses.entities[courseId]);
+
+_ Tại CourseResolver : trước đây dùng service.findCourseById lên server. ( Select trong store theo id, nếu chưa có thì request theo id )
+
+return this.store.pipe(
+	select(selectCourseById(id từ router)),
+	tap(course => {
+		if(!course){
+			this.store.dispatch(new CourseRequested({ courseId }))
+		}
+	})
+	filter(course => !!course), // để chắc chắn router đã trainsition để có được course.
+	first()
+);
+
+
+_ Tạo CourseEffects nếu gọi service lấy course và lưu course vào store.
+
+@Effect()
+loadCourse$ = this.action$.pipe(
+	ofType<CourseRequested>(CourseActionTypes.CourseRequested) // nếu gọi action này thì effect chạy
+	mergeMap(action => this.courseService.findCourseById(action.payload.courseId))
+	map(course => new CourseLoaded({course})) // Sau khi lấy course từ server ta gọi map để lưu vào store
+)
+
+Tại CourseModule : EffectsModule.forFeature([CourseEffects])
+
+* MergeMap vì không muốn hủy bỏ bất kỳ logic nào ( chạy song song )
+
+4. Chức năng load all courses:
+
+_ Tại action bổ sung thêm type : 
+	AllCourseRequested:  = '[Courses Home Page] All Courses Requested',
+	AllCoursesLoaded = '[Courses API] All Courses Loaded'
+
+	class AllCourseRequested 0 có payload
+	class AllCoursesLoaded có payload là : { courses: Course[] }
+
+	export bổ sung thêm .
+
+_ Tại reducer : 
+
+	export const {
+		selectAll,
+		selectEntities,
+		selectIds,
+		selectTotal
+	} = adapter.getSelectors();
+
+_ Selector : course.selectors.ts
+	import * as fromCourse from './course.reducers'
+	export const selectAllCourses = createSelector(selectCoursesState, fromCourse.selectAll)
+
+_ Tại home.component lấy danh sách - không call trực tiếp api mà lấy trong store
+
+	this.store.dispatch(new AllCoursesRequested());
+
+	const courses$ = this.store.pipe(
+		select(selectAllCourses)
+	)
+
+_ Sử dụng side effect để load dữ liệu : Tại CourseEffect
+
+	@Effect()
+	loadAllCourses$ = this.actions.pipe(
+		ofType<AllCoursesRequested>(CourseActionTypes.AllCoursesRequested),
+		mergeMap(action => this.coursesService.findAllCourses()), // chạy song song
+		map(courses => new AllCoursesLoaded({courses})) // dispatch action lưu vào store
+	)
+_ Course reducer : 
+
+	case CourseActionTypes.AllCoursesLoaded:
+		return adapter.addAll(action.payload.courses, {...state, allCoursesLoaded: true})
+
+
+***************** Dùng biến cờ để check data đã load hay chưa
+
+1. CoursesState {
+	allCoursesLoaded: boolean;
+}
+
+2. initState = adapter.getInitState({
+	allCoursesLoaded: false
+});
+
+3. Bổ sung course.selectors :
+
+export const allCoursesLoaded = createSelector(
+	selectCoursesState,
+	coursesState => coursesState.allCoursesLoaded
+);
+
+4. Bổ sung thêm rxjs operator : ta sẽ combine 2 giá trị cuối của 2 observable sử dụng withLastestFrom() : bổ sung sau ofType
+
+	withLastestFrom(this.store.pipe(select(allCoursesLoaded))),
+	filter(([action, allCoursesLoaded]) => !allCourseLoaded), // chỉ chạy tiếp khi chưa load các course.
+
+
+=> người dùng back về trang trước không gọi lại api. Lảng phí bộ nhớ.
+
+
+5. Update - Cập Nhật Thông Tin Khóa Học :
+
+_ Action : bổ sung CourseSaved = '[Edit Course Dialog] Course Saved' => có payload : { course: Update<Course> } => bổ sung export
+
+_ Tại component khi gọi hàm save :
+
+	this.courseService.saveCourse(this.courseId, changes).subscribe(
+		() => {
+			const course : Update<Course> = {
+				id: this.courseId,
+				// changes: {
+				//	description: this.form.value.description,		 ==>>>> Áp dụng cho update 1 trường
+				//}
+				changes
+			}
+			this.store.dispatch(new CourseSaved({ course }))
+			// this.dialog.close();
+		}
+	);	
+
+_ Tại reducer : case CourseActionTypes.CourseSaved:
+	return adapter.updateOne(action.payload.course, state); 
+
+	
 
 
 
@@ -53,4 +230,8 @@ _ Cung cấp CRUD : addOne, updateOne, deleteOne, addAll, ...
 
 
 
-3. Ngrx Entity : 
+
+
+
+
+
