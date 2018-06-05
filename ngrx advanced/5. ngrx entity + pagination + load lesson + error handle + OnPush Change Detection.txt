@@ -1,0 +1,225 @@
+﻿1. Action : 
+
+interface PageQuery{
+	pageIndex: number;
+	pageSize: number;
+}
+
+LessonsPageRequested = '[Course Landing Page] Lessons Page Requested' => payload : { courseId: number, page: PageQuery } /// Gửi request lên server
+
+LessonsPageLoaded = '[Course API] Lessons Page Loaded' => payload : { lessons: Lesson[] } /// Load thành công
+
+LessonsPageCancelled = '[Courses API] Lessons Page Cancelled' /// Sau khi load - có hoặc error
+
+2. Tạo entity bằng angular cli : 
+
+ng g entity --name Lesson --module courses/courses.module.ts
+
+Action ta được :
+
+LoadLessons
+AddLesson
+UpsertLesson
+AddLessons
+UpsrtLessons
+UpdateLesson
+UpdateLessons
+DeleteLesson
+DeleteLessons
+ClearLessons
+
+Reducer ta được tất cả.
+
+StoreModule.forFeature('lessons', lessonsReducer)
+
+3. Implement paging : 
+
+const initPage: PageQuery = {
+	pageIndex: 0,
+	pageSize: 3
+}	
+
+_ Viết selector paging :
+
+export const selectLessonsState = createFeatureSelector<LessonState>("lessons");
+
+export const selectAllLessons = createSelector(
+	selectLessonsState,
+	fromLesson.selectAll // lessons reducers như courses là entity
+);
+
+export const selectLessonsPage = (courseId, page: PageQuery) => createSelector(selectAllLessons, allLessons => {
+	const start = page.pageIndex * page.pageSize;
+	const end = start + page.pageSize;
+	return allLessons.filter(lesson => lesson.courseId == courseId).slice(start, end);
+});
+
+_ Xử lý sort order tại ngrx entity reducer lesson :
+
+function sortByCourseAndSeqNo(l1: Lesson, l2:Lesson){
+	const compare = l1.courseId - l2.courseId;
+	if(compare!=0) return compare;
+	else	return l1.seqNo - l2.seqNo;
+}
+
+Bổ sung thêm các phương thức tại adapter {
+	sortComparer: sortByCourseAndSeqNo
+}
+
+_ Xử dụng paging : 
+
+this.store.pipe(
+	select(selectLessonsPage(courseId, page))
+	tap(lessons => {
+		if(lessons.length > 0){
+			!!! this.lessonsSubject.next(lessons);
+		}else{
+			this.store.dispatch(new LessonsPageRequested({courseId, page});)
+		}
+	}),
+	catchError(err => of([]))
+)
+
+
+_ Implment Load Lesson Page @Affect : lessons
+
+Tại course.effect :
+
+@Effect()
+  loadLessonsPage$ = this.actions$
+    .pipe(
+      ofType<LessonsPageRequested>(CourseActionTypes.LessonsPageRequested),
+      mergeMap(({payload}) =>
+              this.coursesService.findLessons(payload.courseId,
+                          payload.page.pageIndex, payload.page.pageSize)
+                .pipe(
+                  catchError(err => {
+                    console.log('error loading a lessons page ', err);
+                    this.store.dispatch(new LessonsPageCancelled());
+                    return of([]);
+                  })
+                )
+
+      ),
+      map(lessons => new LessonsPageLoaded({lessons}))
+    );
+
+** Tại reducer : 
+
+case LessonsPageLoaded:
+	adapter.addMany(action.payload.lessons, state)
+
+
+_ Sử dụng paging : 
+
+ngAfterViewInit(){
+	this.paginator.page.pipe(
+		tap(() => this.loadLessonsPage())
+	)
+	.subscribe();
+}
+
+loadLessonsPage(){
+	const newPage: PageQuery = {
+		pageIndex: this.paginator.pageIndex,
+		pageSize: this.paginator.pageSize
+	}
+	// this.dataSource.loadLessons(this.course.id, newPage);
+}
+
+
+****************** Hiệu Ứng Phân Trang ***************
+
+Tạo Lessons Reducer : bổ sung thêm state cho LessonsState
+{
+	loading: boolean;
+}
+
+init : false
+
+case : LessonsPageRequested :
+	return { ...state, loading: true }
+case LessonsPageLoaded:
+	adapter.addMany(action.payload.lessons, {...state, loading: false})
+
+_ Sử dụng tại component : 
+
+loading$ : Observable<boolean>;
+
+ngif loading$ | async.
+
+_ Tại ngOnInit :
+
+this.loading$ = this.store.pipe(select(selectLessonsLoading))
+
+_ Tại selectors course :
+
+export const selectLessonsLoading = createSelector(
+	selectLessonsState,
+	lessonsState => lessonsState.loading
+);
+
+
+*************** Xử lý lỗi cho Effect Load Lesson Paging :
+
+@Effect()
+
+this.coursesService.findLessons(payload.courseId, payload.page.pageIndex, payload.page.pageSize).pipe(
+	catchError(err => {
+		console.log('error loading a lesson page', err)
+		this.store.dispatch(new LEssonsPageCancelled());
+		return of([]);
+	})
+)
+
+_ Tại lessonsReducer :
+
+case LessonsPageCancelled :
+
+	return {
+		...state,
+		loading: false
+	}
+
+
+************** OnPush Change Detection 
+
+_ Tại component ngoài cùng của module ( HomeComponent, CourseComponent )
+
+changeDetection: ChangeDetectionStrategy.OnPush
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
