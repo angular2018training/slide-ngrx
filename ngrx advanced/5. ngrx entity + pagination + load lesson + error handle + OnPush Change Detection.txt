@@ -189,7 +189,7 @@ _ Tại component ngoài cùng của module ( HomeComponent, CourseComponent )
 changeDetection: ChangeDetectionStrategy.OnPush
 
 
-
+Link : https://github.com/angular-university/angular-ngrx-course
 
 
 
